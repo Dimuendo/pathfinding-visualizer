@@ -1,0 +1,148 @@
+.node {
+    height: 30px;
+    width: 30px;
+    outline: 1px solid white;
+    margin: 0.5px;
+    float: left;
+}
+
+.start-node {
+    height: 30px;
+    width: 30px;
+    outline: 1px solid white;
+    margin: 0.5px;
+    float: left;
+    background-color: yellowgreen;
+    animation-name: pulseStart;
+    animation-duration: 1s;
+}
+
+.end-node {
+    height: 30px;
+    width: 30px;
+    outline: 1px solid white;
+    margin: 0.5px;
+    float: left;
+    background-color: lightcoral;
+    animation-name: pulseEnd;
+    animation-duration: 1s;
+}
+
+
+.wall-node {
+    height: 30px;
+    width: 30px;
+    outline: 1px solid black;
+    margin: 0.5px;
+    float: left;
+    background-color: black;
+    animation-name: pulseWall;
+    animation-duration: 1s;
+}
+
+.visited-node {
+    height: 30px;
+    width: 30px;
+    outline: 1px solid white;
+    margin: 0.5px;
+    float: left;
+    background-color: lightblue;
+    animation-name: pulseVisited;
+    animation-duration: 1s;
+}
+
+.path-node {
+    height: 30px;
+    width: 30px;
+    outline: 1px solid white;
+    margin: 0.5px;
+    float: left;
+    background-color: #C8A2C8;
+    animation-name: pulsePath;
+    animation-duration: 1s;
+}
+
+@keyframes pulseWall {
+    0% {
+        transform: scale(0.3);
+    }
+
+    75% {
+        transform: scale(1.1);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+
+    from {background-color: lightslategray;}
+    to {background-color: black;}
+}
+
+@keyframes pulseVisited {
+    0% {
+        transform: scale(0.3);
+    }
+
+    75% {
+        transform: scale(1.1);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+
+    from {background-color: darkcyan;}
+    to {background-color: lightblue;}
+}
+
+@keyframes pulsePath {
+    0% {
+        transform: scale(0.3);
+    }
+
+    75% {
+        transform: scale(1.1);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+
+    from {background-color: lightblue;}
+    to {background-color: #C8A2C8;}
+}
+
+@keyframes pulseStart {
+    0% {
+        transform: scale(0.3);
+    }
+
+    75% {
+        transform: scale(1.1);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+
+    from {background-color: lightgreen;}
+    to {background-color: yellowgreen;}
+}
+
+@keyframes pulseEnd {
+    0% {
+        transform: scale(0.3);
+    }
+
+    75% {
+        transform: scale(1.1);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+
+    from {background-color: lightpink;}
+    to {background-color: lightcoral;}
+}
