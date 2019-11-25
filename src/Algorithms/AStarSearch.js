@@ -31,11 +31,10 @@ export function aStarSearch(grid, numRows, numCols, startRow, startCol, endRow, 
         // Update node above
         if (currNode.row + 1 < numRows) {
             const nodeUp = grid[currNode.row + 1][currNode.col];
-            const isWall = nodeUp.isWall;
             let isInClosedList = nodeIsInList(closedList, nodeUp);
             let isInOpenList = nodeIsInList(openList, nodeUp);
 
-            if (!isWall && !isInClosedList) {
+            if (!isInClosedList) {
                 const gNew = currNode.g + nodeUp.weight;
                 const hNew = getManhattanDist(nodeUp.row, nodeUp.col, endRow, endCol);
                 const fNew = gNew + hNew;
@@ -53,11 +52,10 @@ export function aStarSearch(grid, numRows, numCols, startRow, startCol, endRow, 
         // Update node below
         if (currNode.row - 1 >= 0) {
             const nodeDown = grid[currNode.row - 1][currNode.col];
-            const isWall = nodeDown.isWall;
             let isInClosedList = nodeIsInList(closedList, nodeDown);
             let isInOpenList = nodeIsInList(openList, nodeDown);
 
-            if (!isWall && !isInClosedList) {
+            if (!isInClosedList) {
                 const gNew = currNode.g + nodeDown.weight;
                 const hNew = getManhattanDist(nodeDown.row, nodeDown.col, endRow, endCol);
                 const fNew = gNew + hNew;
@@ -76,11 +74,10 @@ export function aStarSearch(grid, numRows, numCols, startRow, startCol, endRow, 
         // Update node right
         if (currNode.col + 1 < numCols) {
             const nodeRight = grid[currNode.row][currNode.col + 1];
-            const isWall = nodeRight.isWall;
             let isInClosedList = nodeIsInList(closedList, nodeRight);
             let isInOpenList = nodeIsInList(openList, nodeRight);
 
-            if (!isWall && !isInClosedList) {
+            if (!isInClosedList) {
                 const gNew = currNode.g + nodeRight.weight;
                 const hNew = getManhattanDist(nodeRight.row, nodeRight.col, endRow, endCol);
                 const fNew = gNew + hNew;
@@ -99,11 +96,10 @@ export function aStarSearch(grid, numRows, numCols, startRow, startCol, endRow, 
         // Update node left
         if (currNode.col - 1 >= 0) {
             const nodeLeft = grid[currNode.row][currNode.col - 1];
-            const isWall = nodeLeft.isWall;
             let isInClosedList = nodeIsInList(closedList, nodeLeft);
             let isInOpenList = nodeIsInList(openList, nodeLeft);
 
-            if (!isWall && !isInClosedList) {
+            if (!isInClosedList) {
                 const gNew = currNode.g + nodeLeft.weight;
                 const hNew = getManhattanDist(nodeLeft.row, nodeLeft.col, endRow, endCol);
                 const fNew = gNew + hNew;

@@ -1,5 +1,6 @@
 import React from 'react';
 import Node from './Node/Node';
+import 'bootstrap/dist/css/bootstrap.min.css';
 import './PathFinderVisualization.css'
 import './Node/Node.css'
 import {dijkstras, getPath} from '../Algorithms/dijkstras';
@@ -7,19 +8,36 @@ import {generateMaze} from '../Algorithms/MazeGeneration';
 import {breadthFirstSearch} from '../Algorithms/BreadthFirstSearch';
 import {depthFirstSearch} from '../Algorithms/DepthFirstSearch';
 import {aStarSearch} from '../Algorithms/AStarSearch'
+import { Button, Dropdown, Navbar, ButtonGroup, DropdownButton, Badge } from 'react-bootstrap';
 
 const SCREEN_WIDTH = window.innerWidth;
 const SCREEN_HEIGHT = window.innerHeight;
 const NODE_SIZE = 30;
 const NUM_ROWS = Math.floor((SCREEN_HEIGHT / NODE_SIZE) - 4);
 const NUM_COLS = Math.floor((SCREEN_WIDTH / NODE_SIZE) - 4);
-const ANIMATION_SPEED = 10;
+const ANIMATION_SPEED = 5;
+const algos = {
+    DIJKSTRAS: "dijkstras",
+    ASTAR: "aStar",
+    BFS: "bfs",
+    DFS: "dfs",
+}
+const walls = {
+    INFINITY: "wall-node-infinity",
+    FIVE: "wall-node-five",
+    FOUR: "wall-node-four",
+    THREE: "wall-node-three",
+    TWO: "wall-node-two",
+    ONE: "wall-node-one",
+}
 
 export default class PathFinderVisualizer extends React.Component{
     constructor(props) {
         super(props);
 
         this.state = {
+            currAlgo: algos.DIJKSTRAS,
+            wallWeight: Infinity,
             grid: [],
             mouseClicked: false,
             startNodeClicked: false,
@@ -87,13 +105,22 @@ export default class PathFinderVisualizer extends React.Component{
     }
 
     clearVistedAndPath() {
+        const grid = this.state.grid;
         for (let currRow = 0; currRow < NUM_ROWS; currRow++) {
             for (let currCol = 0; currCol < NUM_COLS; currCol++) {
                 const currNode = document.getElementById(`row-${currRow}-col-${currCol}`);
-                if (currNode.className === "wall-node") continue;
+                const nodeIsWall = currNode.className === "wall-node-infinity";
+                if (nodeIsWall) continue;
+                const currNodeClassWeight = this.getNodeClassWeight(currNode.className);
                 const isStartNode = currNode.className === "start-node";
                 const isEndNode = currNode.className === "end-node";
-                if (isStartNode) {
+                if (currNodeClassWeight !== "") {
+                    currNode.className = "wall-node" + currNodeClassWeight;
+                    const currWallWeight = this.getWallWeightAsInt(currNodeClassWeight);
+                    this.updateNodeProps(currRow, currCol);
+                    Object.assign(grid[currRow][currCol], {isWall: true});
+                    Object.assign(grid[currRow][currCol], {weight: currWallWeight});
+                } else if (isStartNode) {
                     this.updateStartProps(currRow, currCol);
                 } else if (isEndNode) {
                     this.updateEndProps(currRow, currCol) ;
@@ -105,15 +132,16 @@ export default class PathFinderVisualizer extends React.Component{
         }
     }
 
-    updateGridWall(nodeRow, nodeCol) {
+    updateGridWall(nodeRow, nodeCol, weight) {
         const grid = this.state.grid;
         const currNode = document.getElementById(`row-${nodeRow}-col-${nodeCol}`);
-        if (currNode.className === "wall-node") {
+        const nodeIsWall = currNode.className.includes("wall-node");
+        if (nodeIsWall) {
+            this.updateNodeProps(nodeRow, nodeCol);
             Object.assign(grid[nodeRow][nodeCol], {isWall: true});
-            Object.assign(grid[nodeRow][nodeCol], {weight: Infinity});
+            Object.assign(grid[nodeRow][nodeCol], {weight: weight});
         } if (currNode.className === "node") {
-            Object.assign(grid[nodeRow][nodeCol], {isWall: false});
-            Object.assign(grid[nodeRow][nodeCol], {weight: 1});
+            this.updateNodeProps(nodeRow, nodeCol);
         }
     }
 
@@ -198,16 +226,36 @@ export default class PathFinderVisualizer extends React.Component{
         return isEnd ? true : false;
     }
 
+    getWallClassName(weight) {
+        let wallClassName;
+        if (weight === 1) {
+            wallClassName = walls.ONE;
+        } else if (weight === 2) {
+            wallClassName = walls.TWO;
+        } else if (weight === 3) {
+            wallClassName = walls.THREE;
+        } else if (weight === 4) {
+            wallClassName = walls.FOUR;
+        } else if (weight === 5) {
+            wallClassName = walls.FIVE;
+        } else {
+            wallClassName = walls.INFINITY;
+        }
+        return wallClassName;
+    }
+
     handleNodeClick(nodeRow, nodeCol) {
         const clickedNode = document.getElementById(`row-${nodeRow}-col-${nodeCol}`);
+        const wallClicked = clickedNode.className.includes("wall-node");
 
-        if (clickedNode.className === "wall-node") {
+        if (wallClicked) {
             clickedNode.className = "node";
-            this.updateGridWall(nodeRow, nodeCol);
+            this.updateGridWall(nodeRow, nodeCol, this.state.wallWeight);
             this.setState({mouseClicked: true});
         } else if (clickedNode.className === "node") {
-            clickedNode.className = "wall-node";
-            this.updateGridWall(nodeRow, nodeCol);
+            const wallClassName = this.getWallClassName(this.state.wallWeight);
+            clickedNode.className = wallClassName;
+            this.updateGridWall(nodeRow, nodeCol, this.state.wallWeight);
             this.setState({mouseClicked: true});
         } else if (clickedNode.className === "end-node") {
             this.setState({
@@ -223,8 +271,9 @@ export default class PathFinderVisualizer extends React.Component{
     }
 
     handleNodeEntered(nodeRow, nodeCol) {
-        const enteredNode = document.getElementById(`row-${nodeRow}-col-${nodeCol}`);
         if (nodeRow === this.state.prevRow && nodeCol === this.state.prevCol) return;
+        const enteredNode = document.getElementById(`row-${nodeRow}-col-${nodeCol}`);
+        const wallClicked = enteredNode.className.includes("wall-node");
         
         if (this.state.startNodeClicked) {
             if (nodeRow === this.state.endRow && nodeCol === this.state.endCol) return;
@@ -239,12 +288,14 @@ export default class PathFinderVisualizer extends React.Component{
             enteredNode.className = "end-node";
             this.updateEndNode(nodeRow, nodeCol);
         } else if (this.state.mouseClicked) {
-            if (enteredNode.className === "wall-node") {
+            if (wallClicked) {
                 enteredNode.className = "node";
             } else if (enteredNode.className === "node") {
-                enteredNode.className = "wall-node";
+                const wallClassName = this.getWallClassName(this.state.wallWeight);
+                enteredNode.className = wallClassName;
+                enteredNode.className = wallClassName;
             }
-            this.updateGridWall(nodeRow, nodeCol);
+            this.updateGridWall(nodeRow, nodeCol, this.state.wallWeight);
         }
 
         this.setState({
@@ -271,8 +322,8 @@ export default class PathFinderVisualizer extends React.Component{
             const currWallTop = document.getElementById(`row-${0}-col-${i}`);
             if (currWallTop.className === "start-node" || currWallTop.className === "end-node") continue;
             setTimeout(() => {
-                currWallTop.className = "wall-node";
-                this.updateGridWall(0, i);
+                currWallTop.className = "wall-node-infinity";
+                this.updateGridWall(0, i, Infinity);
             }, ANIMATION_SPEED * animationTimerTop);
             animationTimerTop += 2;
         }
@@ -281,8 +332,8 @@ export default class PathFinderVisualizer extends React.Component{
             const currWallBot = document.getElementById(`row-${NUM_ROWS - 1}-col-${i}`);
             if (currWallBot.className === "start-node" || currWallBot.className === "end-node") continue;
             setTimeout(() => {
-                currWallBot.className = "wall-node";
-                this.updateGridWall(NUM_ROWS - 1, i);
+                currWallBot.className = "wall-node-infinity";
+                this.updateGridWall(NUM_ROWS - 1, i, Infinity);
             }, ANIMATION_SPEED * animationTimerBot);
             animationTimerBot += 2;
         }
@@ -292,8 +343,8 @@ export default class PathFinderVisualizer extends React.Component{
             const currWallRight = document.getElementById(`row-${i}-col-${NUM_COLS - 1}`);
             if (currWallRight.className === "start-node" || currWallRight.className === "end-node") continue;
             setTimeout(() => {
-                currWallRight.className = "wall-node";
-                this.updateGridWall(i, NUM_COLS - 1);
+                currWallRight.className = "wall-node-infinity";
+                this.updateGridWall(i, NUM_COLS - 1, Infinity);
             }, ANIMATION_SPEED * animationTimerRight);
             animationTimerRight += 2;
         }
@@ -302,8 +353,8 @@ export default class PathFinderVisualizer extends React.Component{
             const currWallLeft = document.getElementById(`row-${i}-col-${0}`);
             if (currWallLeft.className === "start-node" || currWallLeft.className === "end-node") continue;
             setTimeout(() => {
-                currWallLeft.className = "wall-node";
-                this.updateGridWall(i, 0);
+                currWallLeft.className = "wall-node-infinity";
+                this.updateGridWall(i, 0, Infinity);
             }, ANIMATION_SPEED * animationTimerLeft);
             animationTimerLeft += 2;
         }
@@ -311,8 +362,9 @@ export default class PathFinderVisualizer extends React.Component{
         return animationTimerLeft;
     }
 
-    genMaze() {
+    genMaze(weight) {
         this.clearGrid();
+        this.setButtonState(true);
         const wallPositions = [];
         let animationTimer = 0;
         const orientation = NUM_ROWS < NUM_COLS ? "vertical" : "horizontal";
@@ -323,21 +375,58 @@ export default class PathFinderVisualizer extends React.Component{
             const wallCol = wallPositions[i].col;
             const currWall = document.getElementById(`row-${wallRow}-col-${wallCol}`);
             setTimeout(() => {
-                currWall.className = "wall-node";
-                this.updateGridWall(wallRow, wallCol);
+                const randomWeight = getRandomWeight();
+                const wallWeight = weight === -1 ? randomWeight : weight;
+                const wallClassName = this.getWallClassName(wallWeight);
+                currWall.className = wallClassName;
+                this.updateGridWall(wallRow, wallCol, wallWeight);
             }, ANIMATION_SPEED * animationTimer);
             this.setState({mouseClicked: false});
             animationTimer += 2;
         }
 
+        setTimeout(() => {
+            this.setButtonState(false);
+        }, ANIMATION_SPEED * animationTimer + 15);
+    }
+
+    getWallWeightAsInt(stringWeight) {
+        let nodeWeight = 1;
+        if (stringWeight.includes("five")) {
+            nodeWeight = 5;
+        } else if (stringWeight.includes("four")) {
+            nodeWeight = 4;
+        } else if (stringWeight.includes("three")) {
+            nodeWeight = 3;
+        } else if (stringWeight.includes("two")) {
+            nodeWeight = 2;
+        } else if (stringWeight.includes("one")) {
+            nodeWeight = 1;
+        }
+        return nodeWeight;
+    }
+
+    getNodeClassWeight(nodeClassName) {
+        let nodeWeight = "";
+        if (nodeClassName.includes("five")) {
+            nodeWeight = "-five";
+        } else if (nodeClassName.includes("four")) {
+            nodeWeight = "-four";
+        } else if (nodeClassName.includes("three")) {
+            nodeWeight = "-three";
+        } else if (nodeClassName.includes("two")) {
+            nodeWeight = "-two";
+        } else if (nodeClassName.includes("one")) {
+            nodeWeight = "-one";
+        }
+        return nodeWeight;
     }
 
     dijkstrasVisualize() {
         this.clearVistedAndPath();
+        this.setButtonState(true);
         const grid = [...this.state.grid];
         const visitedNodes = dijkstras(grid, NUM_ROWS, NUM_COLS, this.state.endRow, this.state.endCol);
-        const path = [];
-        getPath(grid, grid[this.state.endRow][this.state.endCol], path);
         let animationTimer = 0;
 
         // Animate the visited nodes
@@ -348,47 +437,72 @@ export default class PathFinderVisualizer extends React.Component{
                 const nodeRow = visitedNode.row;
                 const nodeCol = visitedNode.col;
                 const visitedNodeDOM = document.getElementById(`row-${nodeRow}-col-${nodeCol}`);
-                setTimeout(() => {
-                    visitedNodeDOM.className = "visited-node";
-                }, ANIMATION_SPEED * animationTimer);
+                const visitedNodeClassName = visitedNodeDOM.className;
+                if (visitedNodeClassName.includes("wall-node")) {
+                    const wallWeight = visitedNodeClassName.substr(9);
+                    const visitedClassName = "visited-node" + wallWeight;
+                    setTimeout(() => {
+                        visitedNodeDOM.className = visitedClassName;
+                    }, ANIMATION_SPEED * animationTimer);
+                } else {
+                    setTimeout(() => {
+                        visitedNodeDOM.className = "visited-node";
+                    }, ANIMATION_SPEED * animationTimer);
+                }
             }
-            animationTimer += 2;
+            animationTimer += 4;
         }
+
+        const path = [];
+        getPath(grid, grid[this.state.endRow][this.state.endCol], path);
 
         // Animate the path
         for (let i = 0; i < path.length; i++) {
             const pathNode = path[i];
-            if (pathNode.isFinish) {
-                console.log(this.state.grid);
-                return;
-            }
+            if (pathNode.isFinish) break;
             const nodeRow = pathNode.row;
             const nodeCol = pathNode.col;
             const pathNodeDOM = document.getElementById(`row-${nodeRow}-col-${nodeCol}`);
+            const pathNodeClassName = pathNodeDOM.className;
+            const pathWeight = this.getNodeClassWeight(pathNodeClassName);
+            const newPathNodeClassName = "path-node" + pathWeight;
             setTimeout(() => {
-                pathNodeDOM.className = "path-node";
+                pathNodeDOM.className = newPathNodeClassName;
             }, ANIMATION_SPEED * animationTimer);
             animationTimer += 5;
         }
+        
+        setTimeout(() => {
+            this.setButtonState(false);
+        }, ANIMATION_SPEED * animationTimer + 15);
     }
 
     aStarVisualize() {
         this.clearVistedAndPath();
+        this.setButtonState(true);
         const grid = [...this.state.grid];
         const visitedNodes = aStarSearch(grid, NUM_ROWS, NUM_COLS, this.state.startRow, this.state.startCol, this.state.endRow, this.state.endCol);
         let animationTimer = 0;
 
         // Animate the visited nodes
         for (let i = 0; i < visitedNodes.length; i++) {
-                const visitedNode = visitedNodes[i];
-                if (visitedNode.isFinish) break;
-                const nodeRow = visitedNode.row;
-                const nodeCol = visitedNode.col;
-                const visitedNodeDOM = document.getElementById(`row-${nodeRow}-col-${nodeCol}`);
+            const visitedNode = visitedNodes[i];
+            if (visitedNode.isFinish) break;
+            const nodeRow = visitedNode.row;
+            const nodeCol = visitedNode.col;
+            const visitedNodeDOM = document.getElementById(`row-${nodeRow}-col-${nodeCol}`);
+            const visitedNodeClassName = visitedNodeDOM.className;
+            if (visitedNodeClassName.includes("wall-node")) {
+                const wallWeight = visitedNodeClassName.substr(9);
+                const visitedClassName = "visited-node" + wallWeight;
+                setTimeout(() => {
+                    visitedNodeDOM.className = visitedClassName;
+                }, ANIMATION_SPEED * animationTimer);
+            } else {
                 setTimeout(() => {
                     visitedNodeDOM.className = "visited-node";
                 }, ANIMATION_SPEED * animationTimer);
-            
+            }
             animationTimer += 2;
         }
 
@@ -398,19 +512,27 @@ export default class PathFinderVisualizer extends React.Component{
         // Animate the path
         for (let i = 0; i < path.length; i++) {
             const pathNode = path[i];
-            if (pathNode.isFinish) return;
+            if (pathNode.isFinish) break;
             const nodeRow = pathNode.row;
             const nodeCol = pathNode.col;
             const pathNodeDOM = document.getElementById(`row-${nodeRow}-col-${nodeCol}`);
+            const pathNodeClassName = pathNodeDOM.className;
+            const pathWeight = this.getNodeClassWeight(pathNodeClassName);
+            const newPathNodeClassName = "path-node" + pathWeight;
             setTimeout(() => {
-                pathNodeDOM.className = "path-node";
+                pathNodeDOM.className = newPathNodeClassName;
             }, ANIMATION_SPEED * animationTimer);
             animationTimer += 5;
         }
+
+        setTimeout(() => {
+            this.setButtonState(false);
+        }, ANIMATION_SPEED * animationTimer + 15);
     }
 
     bfsVisualize() {
         this.clearVistedAndPath();
+        this.setButtonState(true);
         const grid = [...this.state.grid];
         const visitedNodes = breadthFirstSearch(grid, NUM_ROWS, NUM_COLS, this.state.startRow, this.state.startCol, this.state.endRow, this.state.endCol);
         let animationTimer = 0;
@@ -427,7 +549,7 @@ export default class PathFinderVisualizer extends React.Component{
                     visitedNodeDOM.className = "visited-node";
                 }, ANIMATION_SPEED * animationTimer);
             }
-            animationTimer += 2;
+            animationTimer += 4;
         }
 
         const path = [];
@@ -436,7 +558,7 @@ export default class PathFinderVisualizer extends React.Component{
         // Animate the path
         for (let i = 0; i < path.length; i++) {
             const pathNode = path[i];
-            if (pathNode.isFinish) return;
+            if (pathNode.isFinish) break;
             const nodeRow = pathNode.row;
             const nodeCol = pathNode.col;
             const pathNodeDOM = document.getElementById(`row-${nodeRow}-col-${nodeCol}`);
@@ -445,10 +567,15 @@ export default class PathFinderVisualizer extends React.Component{
             }, ANIMATION_SPEED * animationTimer);
             animationTimer += 5;
         }
+
+        setTimeout(() => {
+            this.setButtonState(false);
+        }, ANIMATION_SPEED * animationTimer + 15);
     }
 
     dfsVisualize() {
         this.clearVistedAndPath();
+        this.setButtonState(true);
         const grid = [...this.state.grid];
         const visitedNodes = depthFirstSearch(grid, NUM_ROWS, NUM_COLS, this.state.startRow, this.state.startCol, this.state.endRow, this.state.endCol);
         let animationTimer = 0;
@@ -464,7 +591,7 @@ export default class PathFinderVisualizer extends React.Component{
                     visitedNodeDOM.className = "visited-node";
                 }, ANIMATION_SPEED * animationTimer);
             
-            animationTimer += 2;
+            animationTimer += 4;
         }
 
         const path = [];
@@ -473,7 +600,7 @@ export default class PathFinderVisualizer extends React.Component{
         // Animate the path
         for (let i = 0; i < path.length; i++) {
             const pathNode = path[i];
-            if (pathNode.isFinish) return;
+            if (pathNode.isFinish) break;
             const nodeRow = pathNode.row;
             const nodeCol = pathNode.col;
             const pathNodeDOM = document.getElementById(`row-${nodeRow}-col-${nodeCol}`);
@@ -482,21 +609,107 @@ export default class PathFinderVisualizer extends React.Component{
             }, ANIMATION_SPEED * animationTimer);
             animationTimer += 5;
         }
+
+        setTimeout(() => {
+            this.setButtonState(false);
+        }, ANIMATION_SPEED * animationTimer + 15);
+    }
+
+    visualize(algo) {
+        if (algo === algos.DIJKSTRAS) {
+            this.dijkstrasVisualize();
+        } else if (algo === algos.ASTAR) {
+            this.aStarVisualize()
+        } else if (algo === algos.BFS) {
+            this.bfsVisualize()
+        } else if (algo === algos.DFS) {
+            this.dfsVisualize()
+        }
+    }
+
+    setAlgo(algo) {
+        const visualizeButton = document.getElementById("visualize");
+        if (algo === algos.DIJKSTRAS) {
+            visualizeButton.innerHTML = "Visualize Dijkstras";
+        } else if (algo === algos.ASTAR) {
+            visualizeButton.innerHTML = "Visualize A*";
+        } else if (algo === algos.BFS) {
+            visualizeButton.innerHTML = "Visualize Breadth First Search";
+        } else if (algo === algos.DFS) {
+            visualizeButton.innerHTML = "Visualize Depth First Search";
+        }
+        this.setState({ currAlgo: algo });
+    }
+
+    increaseWeight() {
+        const currWallWeight = this.state.wallWeight;
+        const wallWeightBadge = document.getElementById('wall-weight');
+        if (currWallWeight === Infinity) {
+            return;
+        } else if (currWallWeight === 5) {
+            wallWeightBadge.innerHTML = "∞";
+            this.setState({ wallWeight: Infinity });
+        } else {
+            const newWallWeight = currWallWeight + 1;
+            wallWeightBadge.innerHTML = newWallWeight;
+            this.setState({ wallWeight: newWallWeight });
+        }
+    }
+
+    decreaseWeight() {
+        const currWallWeight = this.state.wallWeight;
+        const wallWeightBadge = document.getElementById('wall-weight');
+        if (currWallWeight === 1) {
+            return;
+        } else if (currWallWeight === Infinity) {
+            wallWeightBadge.innerHTML = 5;
+            this.setState({ wallWeight: 5 });
+        } else {
+            const newWallWeight = currWallWeight - 1;
+            wallWeightBadge.innerHTML = newWallWeight;
+            this.setState({ wallWeight: newWallWeight });
+        }
+    }
+
+    setButtonState(state) {
+        document.getElementById("algo-dropdown").disabled = state;
+        document.getElementById("maze-dropdown").disabled = state;
+        document.getElementById("visualize").disabled = state;
+        document.getElementById("increase-weight").disabled = state;
+        document.getElementById("decrease-weight").disabled = state;
+        document.getElementById("clear-grid").disabled = state;
+        document.getElementById("clear-path").disabled = state;
     }
 
     render() {
         const grid = this.state.grid;
 
         return (
-            <div className = "container">
-                <div className="options-bar">
-                    <button id="dijkstras" onClick={() => this.dijkstrasVisualize()}> Visualize Dijkstras  </button>
-                    <button id="a-star" onClick={() => this.aStarVisualize()}> Visualize A*  </button>
-                    <button id="bfs" onClick={() => this.bfsVisualize()}> Visualize BFS  </button>
-                    <button id="dfs" onClick={() => this.dfsVisualize()}> Visualize DFS  </button>
-                    <button id="clear-grid" onClick={() => this.clearGrid()}> Clear  </button>
-                    <button id="gen-maze" onClick={() => this.genMaze()}> Generate Maze  </button>
-                </div>
+            <div className="container-fluid">
+                 <Navbar bg="dark" variant="dark" expand="lg">
+                    <Navbar.Brand> Pathfinding Visualizer </Navbar.Brand>
+                    <DropdownButton variant="dark" id="algo-dropdown" title="Choose Algorithm" className="ml-2 mr-2">
+                        <Dropdown.Item as="button" onClick={() => this.setAlgo(algos.DIJKSTRAS)}> Dijkstras </Dropdown.Item>
+                        <Dropdown.Item as="button" onClick={() => this.setAlgo(algos.ASTAR)}> A* </Dropdown.Item>
+                        <Dropdown.Item as="button" onClick={() => this.setAlgo(algos.BFS)}> Breadth First Search </Dropdown.Item>
+                        <Dropdown.Item as="button" onClick={() => this.setAlgo(algos.DFS)}> Depth First Search </Dropdown.Item>
+                    </DropdownButton>
+                    <DropdownButton variant="dark" id="maze-dropdown" title="Generate Maze" className="ml-2 mr-2">
+                        <Dropdown.Item as="button" onClick={() => this.genMaze(this.state.wallWeight)}> Use Selected Weight  </Dropdown.Item>
+                        <Dropdown.Item as="button" onClick={() => this.genMaze(-1)}> Use Random Weights  </Dropdown.Item>
+                    </DropdownButton>
+                    <Button id ="visualize" className="ml-2 mr-2" variant="dark" onClick={() => this.visualize(this.state.currAlgo)}> Visualize Dijkstras </Button>
+                    <Navbar.Text id="weight-text" className="ml-2">
+                        Wall Weight:
+                        <Badge className="ml-2 mr-1" variant="light" id="wall-weight"> ∞ </Badge>
+                    </Navbar.Text>
+                    <ButtonGroup>
+                        <Button id="increase-weight" variant="dark" size="sm" onClick={() => this.increaseWeight()}> + </Button>
+                        <Button id="decrease-weight" variant="dark" className="mr-2" size="sm" onClick={() => this.decreaseWeight()}> - </Button>
+                    </ButtonGroup>
+                    <Button id="clear-grid" className="ml-2 mr-2" variant="dark" onClick={() => this.clearGrid()}> Clear Grid </Button>
+                    <Button id="clear-path" className="ml-2 mr-2" variant="dark" onClick={() => this.clearVistedAndPath()}> Clear Path </Button>
+                </Navbar>
                 <div className = "grid" onMouseUp = {() => this.handleMouseUp()}>
                     {grid.map((row, rowIndex) => {
                     return <div key={rowIndex}>{row.map((node, colIndex) => {
@@ -512,10 +725,14 @@ export default class PathFinderVisualizer extends React.Component{
                             ></Node>
                         )})}</div>
                     })}
-                    
                 </div>
-                
             </div>
         );
     }
+}
+
+function getRandomWeight() {
+    const min = 1;
+    const max = 5;
+    return Math.floor(Math.random() * (max - min + 1)) + min;
 }

@@ -1,14 +1,21 @@
 {
+  "homepage": "https://dimuendo.github.io/pathfinding-visualizer",
   "name": "pathfinding-visualizer",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "bootstrap": "^4.3.1",
     "collections": "^5.1.9",
+    "jquery": "^3.4.1",
+    "popper.js": "^1.16.0",
     "react": "^16.11.0",
+    "react-bootstrap": "^1.0.0-beta.16",
     "react-dom": "^16.11.0",
     "react-scripts": "3.2.0"
   },
   "scripts": {
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
@@ -28,5 +35,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "gh-pages": "^2.1.1"
   }
 }

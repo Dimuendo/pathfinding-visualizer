@@ -29,15 +29,15 @@
 }
 
 
-.wall-node {
+.wall-node-infinity {
     height: 30px;
     width: 30px;
     outline: 1px solid black;
     margin: 0.5px;
     float: left;
-    background-color: black;
+    background-color:black;
     animation-name: pulseWall;
-    animation-duration: 1s;
+    animation-duration: 0.5s;
 }
 
 .visited-node {
@@ -145,4 +145,371 @@
 
     from {background-color: lightpink;}
     to {background-color: lightcoral;}
+}
+
+/* WALL WEIGHT CSS */
+
+.wall-node-five {
+    height: 30px;
+    width: 30px;
+    outline: 1px solid #202020;
+    margin: 0.5px;
+    float: left;
+    background-color: #202020;
+    transform: scale(0.8);
+    animation-name: pulseWallFive;
+    animation-duration: 0.5s;
+}
+
+.wall-node-four {
+    height: 30px;
+    width: 30px;
+    outline: 1px solid #404040;
+    margin: 0.5px;
+    float: left;
+    background-color: #404040;
+    transform: scale(0.8);
+    animation-name: pulseWallFour;
+    animation-duration: 0.5s;
+}
+
+.wall-node-three {
+    height: 30px;
+    width: 30px;
+    outline: 1px solid #606060;
+    margin: 0.5px;
+    float: left;
+    background-color:#606060;
+    transform: scale(0.8);
+    animation-name: pulseWallThree;
+    animation-duration: 0.5s;
+}
+
+.wall-node-two {
+    height: 30px;
+    width: 30px;
+    outline: 1px solid #787878;
+    margin: 0.5px;
+    float: left;
+    background-color: #787878;
+    transform: scale(0.8);
+    animation-name: pulseWallTwo;
+    animation-duration: 0.5s;
+}
+
+.wall-node-one {
+    height: 30px;
+    width: 30px;
+    outline: 1px solid #989898;
+    margin: 0.5px;
+    float: left;
+    background-color:#989898;
+    transform: scale(0.8);
+    animation-name: pulseWallOne;
+    animation-duration: 0.5s;
+}
+
+@keyframes pulseWallFive {
+    0% {
+        transform: scale(0.1);
+    }
+
+    75% {
+        transform: scale(0.9);
+    }
+
+    100% {
+        transform: scale(0.8);
+    }
+
+    from {background-color: lightslategray;}
+    to {background-color: #202020;}
+}
+
+@keyframes pulseWallFour {
+    0% {
+        transform: scale(0.1);
+    }
+
+    75% {
+        transform: scale(0.9);
+    }
+
+    100% {
+        transform: scale(0.8);
+    }
+
+    from {background-color: lightslategray;}
+    to {background-color: #404040;}
+}
+
+@keyframes pulseWallThree {
+    0% {
+        transform: scale(0.1);
+    }
+
+    75% {
+        transform: scale(0.9);
+    }
+
+    100% {
+        transform: scale(0.8);
+    }
+
+    from {background-color: lightslategray;}
+    to {background-color: #606060;}
+}
+
+@keyframes pulseWallTwo {
+    0% {
+        transform: scale(0.1);
+    }
+
+    75% {
+        transform: scale(0.9);
+    }
+
+    100% {
+        transform: scale(0.8);
+    }
+
+    from {background-color: lightslategray;}
+    to {background-color: #787878;}
+}
+
+@keyframes pulseWallOne {
+    0% {
+        transform: scale(0.1);
+    }
+
+    75% {
+        transform: scale(0.9);
+    }
+
+    100% {
+        transform: scale(0.8);
+    }
+
+    from {background-color: #DCDCDC;}
+    to {background-color: #989898;}
+}
+
+/* VISITED WEIGHT CSS */
+
+.visited-node-five {
+    height: 30px;
+    width: 30px;
+    outline: 1px solid white;
+    margin: 0.5px;
+    float: left;
+    background-color:  #072F5F;
+    transform: scale(0.8);
+    animation-name: pulseVisitedWeightFive;
+    animation-duration: 1s;
+}
+
+.visited-node-four {
+    height: 30px;
+    width: 30px;
+    outline: 1px solid white;
+    margin: 0.5px;
+    float: left;
+    background-color: #1261A0;
+    transform: scale(0.8);
+    animation-name: pulseVisitedWeightFour;
+    animation-duration: 1s;
+}
+
+.visited-node-three {
+    height: 30px;
+    width: 30px;
+    outline: 1px solid white;
+    margin: 0.5px;
+    float: left;
+    background-color: #3895D3;
+    transform: scale(0.8);
+    animation-name: pulseVisitedWeightThree;
+    animation-duration: 1s;
+}
+
+.visited-node-two {
+    height: 30px;
+    width: 30px;
+    outline: 1px solid white;
+    margin: 0.5px;
+    float: left;
+    background-color: #58CCED;
+    transform: scale(0.8);
+    animation-name: pulseVisitedWeightTwo;
+    animation-duration: 1s;
+}
+
+.visited-node-one {
+    height: 30px;
+    width: 30px;
+    outline: 1px solid white;
+    margin: 0.5px;
+    float: left;
+    background-color:lightskyblue;
+    transform: scale(0.8);
+    animation-name: pulseVisitedWeightOne;
+    animation-duration: 1s;
+}
+
+@keyframes pulseVisitedWeightFive {
+    0% {
+        transform: scale(0.1);
+    }
+
+    75% {
+        transform: scale(0.9);
+    }
+
+    100% {
+        transform: scale(0.8);
+    }
+
+    from {background-color: lightblue;}
+    to {background-color: #072F5F;}
+}
+
+@keyframes pulseVisitedWeightFour {
+    0% {
+        transform: scale(0.1);
+    }
+
+    75% {
+        transform: scale(0.9);
+    }
+
+    100% {
+        transform: scale(0.8);
+    }
+
+    from {background-color: lightblue;}
+    to {background-color: #1261A0;}
+}
+@keyframes pulseVisitedWeightThree {
+    0% {
+        transform: scale(0.1);
+    }
+
+    75% {
+        transform: scale(0.9);
+    }
+
+    100% {
+        transform: scale(0.8);
+    }
+
+    from {background-color: lightblue;}
+    to {background-color: #3895D3;}
+}
+
+@keyframes pulseVisitedWeightTwo {
+    0% {
+        transform: scale(0.1);
+    }
+
+    75% {
+        transform: scale(0.9);
+    }
+
+    100% {
+        transform: scale(0.8);
+    }
+
+    from {background-color: lightblue;}
+    to {background-color: #58CCED;}
+}
+
+@keyframes pulseVisitedWeightOne {
+    0% {
+        transform: scale(0.1);
+    }
+
+    75% {
+        transform: scale(0.9);
+    }
+
+    100% {
+        transform: scale(0.8);
+    }
+
+    from {background-color: lightblue;}
+    to {background-color: lightskyblue;}
+}
+
+/* PATH WEIGHT CSS */
+
+.path-node-five {
+    height: 30px;
+    width: 30px;
+    outline: 1px solid white;
+    margin: 0.5px;
+    float: left;
+    background-color: #7C567C;
+    animation-name: pulsePathWeight;
+    animation-duration: 1s;
+}
+
+.path-node-four {
+    height: 30px;
+    width: 30px;
+    outline: 1px solid white;
+    margin: 0.5px;
+    float: left;
+    background-color: #7C567C;
+    animation-name: pulsePathWeight;
+    animation-duration: 1s;
+}
+
+.path-node-three {
+    height: 30px;
+    width: 30px;
+    outline: 1px solid white;
+    margin: 0.5px;
+    float: left;
+    background-color: #7C567C;
+    animation-name: pulsePathWeight;
+    animation-duration: 1s;
+}
+
+.path-node-two {
+    height: 30px;
+    width: 30px;
+    outline: 1px solid white;
+    margin: 0.5px;
+    float: left;
+    background-color: #7C567C;
+    animation-name: pulsePathWeight;
+    animation-duration: 1s;
+}
+
+.path-node-one {
+    height: 30px;
+    width: 30px;
+    outline: 1px solid white;
+    margin: 0.5px;
+    float: left;
+    background-color: #7C567C;
+    animation-name: pulsePathWeight;
+    animation-duration: 1s;
+}
+
+@keyframes pulsePathWeight {
+    0% {
+        transform: scale(0.3);
+    }
+
+    75% {
+        transform: scale(1.1);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+
+    from {background-color: lightblue;}
+    to {background-color: #7C567C;}
 }
