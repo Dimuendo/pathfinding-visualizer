@@ -733,6 +733,7 @@ export default class PathFinderVisualizer extends React.Component{
 
 function getRandomWeight() {
     const min = 1;
-    const max = 5;
-    return Math.floor(Math.random() * (max - min + 1)) + min;
+    const max = 6;
+    const randWeight = Math.floor(Math.random() * (max - min + 1)) + min;
+    return randWeight === 6 ? Infinity : randWeight;
 }
