@@ -40,7 +40,6 @@ export function dijkstras(grid, numRows, numCols, endRow, endCol) {
                 return visitedNodes;
             }
 
-            // Update adjacent nodes
             const minNodeDistance = minNode.distance;
             const visitedNodeSet = [];
             

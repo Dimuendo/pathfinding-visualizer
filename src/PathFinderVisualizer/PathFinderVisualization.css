@@ -5,17 +5,18 @@
 	margin-left:auto;
  }
 
- .navbar {
-	 margin-bottom: 15px;
- }
+.navbar {
+	margin-bottom: 15px;
+	background-color: black;
+}
 
- #weight-text {
-	 color: white;
- }
+#weight-text {
+	color: white;
+}
 
- #wall-weight {
-	 min-width: 20px;
- }
+#wall-weight {
+	min-width: 20px;
+}
 
 .grid {
 	display: inline-block;
@@ -25,4 +26,4 @@
 .btn:focus,.btn:active {
 	outline: none !important;
 	box-shadow: none;
- }
+}

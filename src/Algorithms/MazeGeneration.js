@@ -40,6 +40,7 @@ export function generateMaze(row, col, numRows, numCols, orientation, wallPositi
         wallRow += rowDir;
     }
 
+    // Recurse on subareas
     let newCol = col;
     let newRow = row;
     let newNumCols = orientation === "horizontal" ? numCols : wallCol - col;

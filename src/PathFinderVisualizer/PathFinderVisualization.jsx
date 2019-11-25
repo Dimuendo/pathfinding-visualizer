@@ -38,6 +38,7 @@ export default class PathFinderVisualizer extends React.Component{
         this.state = {
             currAlgo: algos.DIJKSTRAS,
             wallWeight: Infinity,
+            running: false,
             grid: [],
             mouseClicked: false,
             startNodeClicked: false,
@@ -56,9 +57,14 @@ export default class PathFinderVisualizer extends React.Component{
     }
 
     shouldComponentUpdate(nextProps, nextState) {
+        // Avoid rerendering entire dom on every setState to avoid performance issues
         if (this.state.mouseClicked) return false;
         return true;
     }
+
+    //////////////////////////////////////////////////////////////////////////////////
+    //                              Grid Creation                                   //
+    //////////////////////////////////////////////////////////////////////////////////
 
     createNode(nodeRow, nodeCol) {
         const isStart = nodeCol === this.state.startCol && nodeRow === this.state.startRow;
@@ -92,6 +98,10 @@ export default class PathFinderVisualizer extends React.Component{
         this.setState({grid: grid});
     }
 
+    //////////////////////////////////////////////////////////////////////////////////
+    //                              Grid Deletion                                   //
+    //////////////////////////////////////////////////////////////////////////////////
+
     clearGrid() {
         this.createGrid();
         for (let currRow = 0; currRow < NUM_ROWS; currRow++) {
@@ -110,7 +120,12 @@ export default class PathFinderVisualizer extends React.Component{
             for (let currCol = 0; currCol < NUM_COLS; currCol++) {
                 const currNode = document.getElementById(`row-${currRow}-col-${currCol}`);
                 const nodeIsWall = currNode.className === "wall-node-infinity";
+
+                // Node is a wall with infinite weight, continue
                 if (nodeIsWall) continue;
+
+                // Update the node properties appropriately. If the visited node or path node has a 
+                //   weight in its class => get that weight and append it to a wall-node classname else update its properties
                 const currNodeClassWeight = this.getNodeClassWeight(currNode.className);
                 const isStartNode = currNode.className === "start-node";
                 const isEndNode = currNode.className === "end-node";
@@ -132,7 +147,12 @@ export default class PathFinderVisualizer extends React.Component{
         }
     }
 
+    //////////////////////////////////////////////////////////////////////////////////
+    //                               Grid Updates                                   //
+    //////////////////////////////////////////////////////////////////////////////////
+
     updateGridWall(nodeRow, nodeCol, weight) {
+        // Update the given node to be a regular node then make it a wall and set its weight
         const grid = this.state.grid;
         const currNode = document.getElementById(`row-${nodeRow}-col-${nodeCol}`);
         const nodeIsWall = currNode.className.includes("wall-node");
@@ -146,6 +166,7 @@ export default class PathFinderVisualizer extends React.Component{
     }
 
     updateNodeProps(nodeRow, nodeCol) {
+        // Update the given node to be a regular node
         const grid = this.state.grid;
         Object.assign(grid[nodeRow][nodeCol], {isStart: false});
         Object.assign(grid[nodeRow][nodeCol], {isFinish: false});
@@ -159,6 +180,7 @@ export default class PathFinderVisualizer extends React.Component{
     }
 
     updateStartProps(nodeRow, nodeCol) {
+        // Update the given node to be a start node
         const grid = this.state.grid;
         Object.assign(grid[nodeRow][nodeCol], {isStart: true});
         Object.assign(grid[nodeRow][nodeCol], {isFinish: false});
@@ -172,6 +194,7 @@ export default class PathFinderVisualizer extends React.Component{
     }
 
     updateEndProps(nodeRow, nodeCol) {
+        // Update the given node to be an end node
         const grid = this.state.grid;
         Object.assign(grid[nodeRow][nodeCol], {isStart: false});
         Object.assign(grid[nodeRow][nodeCol], {isFinish: true});
@@ -216,6 +239,10 @@ export default class PathFinderVisualizer extends React.Component{
         });
     }
 
+    //////////////////////////////////////////////////////////////////////////////////
+    //                              Helper Functions                                //
+    //////////////////////////////////////////////////////////////////////////////////
+
     isStart(nodeRow, nodeCol) {
         const isStart = nodeRow === this.state.startRow && nodeCol === this.state.startCol;
         return isStart ? true : false;
@@ -227,6 +254,7 @@ export default class PathFinderVisualizer extends React.Component{
     }
 
     getWallClassName(weight) {
+        // Get the appropriate className associated with the given weight
         let wallClassName;
         if (weight === 1) {
             wallClassName = walls.ONE;
@@ -244,7 +272,47 @@ export default class PathFinderVisualizer extends React.Component{
         return wallClassName;
     }
 
+    getWallWeightAsInt(stringWeight) {
+        // Given a wall classname return its integer weight
+        let nodeWeight = 1;
+        if (stringWeight.includes("five")) {
+            nodeWeight = 5;
+        } else if (stringWeight.includes("four")) {
+            nodeWeight = 4;
+        } else if (stringWeight.includes("three")) {
+            nodeWeight = 3;
+        } else if (stringWeight.includes("two")) {
+            nodeWeight = 2;
+        } else if (stringWeight.includes("one")) {
+            nodeWeight = 1;
+        }
+        return nodeWeight;
+    }
+
+    getNodeClassWeight(nodeClassName) {
+        // Given a classname check if it has a weight in it and return that weight
+        //   so it can be appended to a classname
+        let nodeWeight = "";
+        if (nodeClassName.includes("five")) {
+            nodeWeight = "-five";
+        } else if (nodeClassName.includes("four")) {
+            nodeWeight = "-four";
+        } else if (nodeClassName.includes("three")) {
+            nodeWeight = "-three";
+        } else if (nodeClassName.includes("two")) {
+            nodeWeight = "-two";
+        } else if (nodeClassName.includes("one")) {
+            nodeWeight = "-one";
+        }
+        return nodeWeight;
+    }
+
+    //////////////////////////////////////////////////////////////////////////////////
+    //                              Click Handling                                  //
+    //////////////////////////////////////////////////////////////////////////////////
+
     handleNodeClick(nodeRow, nodeCol) {
+        if (this.state.running) return;
         const clickedNode = document.getElementById(`row-${nodeRow}-col-${nodeCol}`);
         const wallClicked = clickedNode.className.includes("wall-node");
 
@@ -271,23 +339,27 @@ export default class PathFinderVisualizer extends React.Component{
     }
 
     handleNodeEntered(nodeRow, nodeCol) {
+        if (this.state.running) return;
         if (nodeRow === this.state.prevRow && nodeCol === this.state.prevCol) return;
         const enteredNode = document.getElementById(`row-${nodeRow}-col-${nodeCol}`);
         const wallClicked = enteredNode.className.includes("wall-node");
         
         if (this.state.startNodeClicked) {
+            // Update the entered node to be the start node, update prev node to be a regular node
             if (nodeRow === this.state.endRow && nodeCol === this.state.endCol) return;
             const prevNode = document.getElementById(`row-${this.state.prevRow}-col-${this.state.prevCol}`);
             prevNode.className = "node";
             enteredNode.className = "start-node";
             this.updateStartNode(nodeRow, nodeCol);
         } else if (this.state.endNodeClicked) {
+            // Update the entered node to be the end node, update prev node to be a regular node
             if (nodeRow === this.state.startRow && nodeCol === this.state.startCol) return;
             const prevNode = document.getElementById(`row-${this.state.prevRow}-col-${this.state.prevCol}`);
             prevNode.className = "node";
             enteredNode.className = "end-node";
             this.updateEndNode(nodeRow, nodeCol);
         } else if (this.state.mouseClicked) {
+            // Update the entered node to be a wall/regular node respectively
             if (wallClicked) {
                 enteredNode.className = "node";
             } else if (enteredNode.className === "node") {
@@ -312,12 +384,17 @@ export default class PathFinderVisualizer extends React.Component{
         });
     }
 
+    //////////////////////////////////////////////////////////////////////////////////
+    //                              Maze Generation                                 //
+    //////////////////////////////////////////////////////////////////////////////////
+
     genOuterWalls() {
         let animationTimerTop = 0;
         let animationTimerBot = 0;
         let animationTimerRight = 0
         let animationTimerLeft = 0
-
+        
+        // Create the outer top walls from left to right
         for (let i = 0 ; i < NUM_COLS; i++) {
             const currWallTop = document.getElementById(`row-${0}-col-${i}`);
             if (currWallTop.className === "start-node" || currWallTop.className === "end-node") continue;
@@ -328,6 +405,7 @@ export default class PathFinderVisualizer extends React.Component{
             animationTimerTop += 2;
         }
 
+        // Create the outer bottom walls from right to left
         for (let i = NUM_COLS - 1 ; i >= 0; i--) {
             const currWallBot = document.getElementById(`row-${NUM_ROWS - 1}-col-${i}`);
             if (currWallBot.className === "start-node" || currWallBot.className === "end-node") continue;
@@ -338,7 +416,11 @@ export default class PathFinderVisualizer extends React.Component{
             animationTimerBot += 2;
         }
 
+        // Set the animation timers for the vertical walls to be the time it takes for 
+        //   the horizontal walls to generate
         animationTimerRight = animationTimerLeft = animationTimerTop;
+
+        // Create the outer right walls from top to bottom
         for (let i = 1; i < NUM_ROWS - 1; i++) {
             const currWallRight = document.getElementById(`row-${i}-col-${NUM_COLS - 1}`);
             if (currWallRight.className === "start-node" || currWallRight.className === "end-node") continue;
@@ -349,6 +431,7 @@ export default class PathFinderVisualizer extends React.Component{
             animationTimerRight += 2;
         }
 
+        // Create the outer left walls from bottom to top
         for (let i = NUM_ROWS - 2; i >= 0; i--) {
             const currWallLeft = document.getElementById(`row-${i}-col-${0}`);
             if (currWallLeft.className === "start-node" || currWallLeft.className === "end-node") continue;
@@ -359,17 +442,23 @@ export default class PathFinderVisualizer extends React.Component{
             animationTimerLeft += 2;
         }
 
+        // Return how long it takes to generate all the outer walls
         return animationTimerLeft;
     }
 
     genMaze(weight) {
         this.clearGrid();
         this.setButtonState(true);
+        this.setState({ running: true });
         const wallPositions = [];
         let animationTimer = 0;
         const orientation = NUM_ROWS < NUM_COLS ? "vertical" : "horizontal";
         animationTimer = this.genOuterWalls();
+
+        // Get the wall positions for the generated maze
         generateMaze(1, 1, NUM_ROWS - 2, NUM_COLS - 2, orientation, wallPositions, this.state.startRow, this.state.startCol, this.state.endRow, this.state.endCol);
+
+        // Change each wall position into a wall
         for (let i = 0; i < wallPositions.length; i++) {
             const wallRow = wallPositions[i].row;
             const wallCol = wallPositions[i].col;
@@ -385,46 +474,21 @@ export default class PathFinderVisualizer extends React.Component{
             animationTimer += 2;
         }
 
+        // Renable the buttons
         setTimeout(() => {
             this.setButtonState(false);
+            this.setState({ running: false });
         }, ANIMATION_SPEED * animationTimer + 15);
     }
 
-    getWallWeightAsInt(stringWeight) {
-        let nodeWeight = 1;
-        if (stringWeight.includes("five")) {
-            nodeWeight = 5;
-        } else if (stringWeight.includes("four")) {
-            nodeWeight = 4;
-        } else if (stringWeight.includes("three")) {
-            nodeWeight = 3;
-        } else if (stringWeight.includes("two")) {
-            nodeWeight = 2;
-        } else if (stringWeight.includes("one")) {
-            nodeWeight = 1;
-        }
-        return nodeWeight;
-    }
-
-    getNodeClassWeight(nodeClassName) {
-        let nodeWeight = "";
-        if (nodeClassName.includes("five")) {
-            nodeWeight = "-five";
-        } else if (nodeClassName.includes("four")) {
-            nodeWeight = "-four";
-        } else if (nodeClassName.includes("three")) {
-            nodeWeight = "-three";
-        } else if (nodeClassName.includes("two")) {
-            nodeWeight = "-two";
-        } else if (nodeClassName.includes("one")) {
-            nodeWeight = "-one";
-        }
-        return nodeWeight;
-    }
+    //////////////////////////////////////////////////////////////////////////////////
+    //                          Algorithm Visualizations                            //
+    //////////////////////////////////////////////////////////////////////////////////
 
     dijkstrasVisualize() {
         this.clearVistedAndPath();
         this.setButtonState(true);
+        this.setState({ running: true });
         const grid = [...this.state.grid];
         const visitedNodes = dijkstras(grid, NUM_ROWS, NUM_COLS, this.state.endRow, this.state.endCol);
         let animationTimer = 0;
@@ -438,6 +502,9 @@ export default class PathFinderVisualizer extends React.Component{
                 const nodeCol = visitedNode.col;
                 const visitedNodeDOM = document.getElementById(`row-${nodeRow}-col-${nodeCol}`);
                 const visitedNodeClassName = visitedNodeDOM.className;
+
+                // If we are visiting a weighted wall then get the weight and append it to a visited-node classname
+                //   else chanmge the classname to be a visited node
                 if (visitedNodeClassName.includes("wall-node")) {
                     const wallWeight = visitedNodeClassName.substr(9);
                     const visitedClassName = "visited-node" + wallWeight;
@@ -465,6 +532,9 @@ export default class PathFinderVisualizer extends React.Component{
             const pathNodeDOM = document.getElementById(`row-${nodeRow}-col-${nodeCol}`);
             const pathNodeClassName = pathNodeDOM.className;
             const pathWeight = this.getNodeClassWeight(pathNodeClassName);
+
+            // If there is a weight in the currentnodes classname then it will be appended else the pathweight
+            //   will be empty and nothing will be appended
             const newPathNodeClassName = "path-node" + pathWeight;
             setTimeout(() => {
                 pathNodeDOM.className = newPathNodeClassName;
@@ -472,14 +542,17 @@ export default class PathFinderVisualizer extends React.Component{
             animationTimer += 5;
         }
         
+        // Reenable the buttons
         setTimeout(() => {
             this.setButtonState(false);
+            this.setState({ running: false });
         }, ANIMATION_SPEED * animationTimer + 15);
     }
 
     aStarVisualize() {
         this.clearVistedAndPath();
         this.setButtonState(true);
+        this.setState({ running: true });
         const grid = [...this.state.grid];
         const visitedNodes = aStarSearch(grid, NUM_ROWS, NUM_COLS, this.state.startRow, this.state.startCol, this.state.endRow, this.state.endCol);
         let animationTimer = 0;
@@ -527,12 +600,14 @@ export default class PathFinderVisualizer extends React.Component{
 
         setTimeout(() => {
             this.setButtonState(false);
+            this.setState({ running: false });
         }, ANIMATION_SPEED * animationTimer + 15);
     }
 
     bfsVisualize() {
         this.clearVistedAndPath();
         this.setButtonState(true);
+        this.setState({ running: true });
         const grid = [...this.state.grid];
         const visitedNodes = breadthFirstSearch(grid, NUM_ROWS, NUM_COLS, this.state.startRow, this.state.startCol, this.state.endRow, this.state.endCol);
         let animationTimer = 0;
@@ -570,12 +645,14 @@ export default class PathFinderVisualizer extends React.Component{
 
         setTimeout(() => {
             this.setButtonState(false);
+            this.setState({ running: false });
         }, ANIMATION_SPEED * animationTimer + 15);
     }
 
     dfsVisualize() {
         this.clearVistedAndPath();
         this.setButtonState(true);
+        this.setState({ running: true });
         const grid = [...this.state.grid];
         const visitedNodes = depthFirstSearch(grid, NUM_ROWS, NUM_COLS, this.state.startRow, this.state.startCol, this.state.endRow, this.state.endCol);
         let animationTimer = 0;
@@ -612,10 +689,12 @@ export default class PathFinderVisualizer extends React.Component{
 
         setTimeout(() => {
             this.setButtonState(false);
+            this.setState({ running: false });
         }, ANIMATION_SPEED * animationTimer + 15);
     }
 
     visualize(algo) {
+        // Run the chosen algorithm
         if (algo === algos.DIJKSTRAS) {
             this.dijkstrasVisualize();
         } else if (algo === algos.ASTAR) {
@@ -627,7 +706,12 @@ export default class PathFinderVisualizer extends React.Component{
         }
     }
 
+    //////////////////////////////////////////////////////////////////////////////////
+    //                              Button Functions                                //
+    //////////////////////////////////////////////////////////////////////////////////
+
     setAlgo(algo) {
+        // Update the state to reflect the chosen algorithm
         const visualizeButton = document.getElementById("visualize");
         if (algo === algos.DIJKSTRAS) {
             visualizeButton.innerHTML = "Visualize Dijkstras";
@@ -642,6 +726,7 @@ export default class PathFinderVisualizer extends React.Component{
     }
 
     increaseWeight() {
+        // Increase the counter for the weight badge
         const currWallWeight = this.state.wallWeight;
         const wallWeightBadge = document.getElementById('wall-weight');
         if (currWallWeight === Infinity) {
@@ -657,6 +742,7 @@ export default class PathFinderVisualizer extends React.Component{
     }
 
     decreaseWeight() {
+        // Decrease the counter for the weight badge
         const currWallWeight = this.state.wallWeight;
         const wallWeightBadge = document.getElementById('wall-weight');
         if (currWallWeight === 1) {
@@ -672,6 +758,7 @@ export default class PathFinderVisualizer extends React.Component{
     }
 
     setButtonState(state) {
+        // Set all the buttons to the given state, true => button is disabled
         document.getElementById("algo-dropdown").disabled = state;
         document.getElementById("maze-dropdown").disabled = state;
         document.getElementById("visualize").disabled = state;
@@ -680,6 +767,10 @@ export default class PathFinderVisualizer extends React.Component{
         document.getElementById("clear-grid").disabled = state;
         document.getElementById("clear-path").disabled = state;
     }
+
+    //////////////////////////////////////////////////////////////////////////////////
+    //                                  Render                                      //
+    //////////////////////////////////////////////////////////////////////////////////
 
     render() {
         const grid = this.state.grid;
@@ -732,6 +823,7 @@ export default class PathFinderVisualizer extends React.Component{
 }
 
 function getRandomWeight() {
+    // Get a random number b/w 1 and 6, 6 => make weight infinite
     const min = 1;
     const max = 6;
     const randWeight = Math.floor(Math.random() * (max - min + 1)) + min;
